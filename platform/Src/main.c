@@ -513,7 +513,7 @@ void StartTask02(void const * argument)
 * @retval None
 */
 	#define PB1 HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)
-	int16_t out_middle;
+
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void const * argument)
 {
@@ -521,63 +521,94 @@ void StartTask03(void const * argument)
 	speed_set = 0;
 	int16_t out_left,out_right;
 	pid_param_init(&pid[0],5000,50,0,0,0);//两个3508电机pid的初始化
-	pid_param_init(&pid[0],5000,50,0,0,0);//两个3508电机pid的初始化
+	pid_param_init(&pid[1],5000,50,0,0,0);//两个3508电机pid的初始化
+	pid_param_init(&pid[2],3500,50,10,0,0);
 	
-	uint8_t flag_init = 0;
-	uint8_t flag_shoot = 0;	
-	uint8_t flag_back = 0;
-	total_angle_set = 39000;
+	debug_Kp = 50;
+
+	total_angle_set = 20000;
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
-		pid_param_init(&pid[0],3000,500,5,debug_Ki,debug_Kd);//两个3508电机pid的初始化
-		pid_param_init(&pid[1],3000,500,5,debug_Ki,debug_Kd);//两个3508电机pid的初始化
+		pid_param_init(&pid[0],6000,500,debug_Kp,debug_Ki,debug_Kd);//两个3508电机pid的初始化
+		pid_param_init(&pid[1],6000,500,debug_Kp,debug_Ki,debug_Kd);//两个3508电机pid的初始化
 		out_right = pid_calc(&pid[0],motor[0].real_current,speed_set);
 		out_left = pid_calc(&pid[1],motor[1].real_current,-speed_set);
-		
-		out_middle = 0;
+
+		int16_t out_middle = 0;
+		uint8_t flag_init = 0;
+		uint8_t flag_shoot = 0;
 		get_total_angle(&motor[2]);
 		total_angle_now = motor[2].total_angle;
-		if(flag_init == 0)
-		{
-			flag_init = 1;
-			total_angle_ini = total_angle_now;
-		}
 		//拨弹电机
-		if((remote_data == 3)&&(PB1 == 1)&&(flag_shoot == 0)&&(flag_back == 0))
+		/*flag_shoot
+		0：就绪状态
+		1：发射状态
+		2：回拉状态
+		flag_init：是否已经发射过一次，且未清零
+		1:已发射出去过
+		*/
+		if(flag_init == 1)
 		{
-			out_middle = -1500;
-		}
-		else if((PB1 == 0)&&((total_angle_ini - total_angle_now)<total_angle_set)&&(flag_back == 0))
-		{
-			out_middle = -1500;
-		}
-		else if((total_angle_ini - total_angle_now)>total_angle_set)
-		{
-			out_middle = 1500;
-			flag_shoot = 1;
-			flag_back = 1;
-		}
-		else if ((PB1 == 1)&&(flag_shoot == 1)&&(flag_back == 1))
-		{
-			out_middle = 0;
-			flag_back = 0;
-		}
-		else if (remote_data ==1)
-		{
-			if(flag_back == 0)
+			if(remote_data == 1)
 			{
-				out_middle = 1000;
+				flag_init = 0;
+				flag_shoot = 0;
 			}
-			else
+		}
+		else
+		{
+			if(remote_data == 3)
 			{
-				out_middle = 0;
+				if(PB1 == 1)
+				{
+					total_angle_ini = total_angle_now;//对电机位置再作调整
+					if((flag_init == 0)&&(flag_shoot == 0))
+					{
+						flag_shoot = 1;
+					}
+				}
+				if(flag_shoot == 1)//发出状态
+				{
+					if((total_angle_ini - total_angle_now)<total_angle_set)
+					{
+						out_middle = pid_calc(&pid[2],motor[2].real_current,-1500);
+					}
+					else
+					{
+						flag_shoot = 2;
+					}
+				}
+				if(flag_shoot == 2)//回拉状态
+				{
+					if(PB1 == 1)
+					{
+						out_middle = 0;
+						flag_init = 1;
+						flag_shoot = 3;//不知道有没有这个必要
+					}
+					else
+					{
+						out_middle = pid_calc(&pid[2],motor[2].real_current,1500);
+					}
+				}
 			}
-			flag_shoot = 0;
+			else if(remote_data == 1)
+			{
+				if(PB1 == 1)
+				{
+					flag_shoot = 0;
+					flag_init = 0;
+				}
+				else
+				{
+					out_middle = pid_calc(&pid[2],motor[2].real_current,1500);
+				}
+			}
 		}
 		
-		set_moto_current(&hcan1,out_right,out_left,out_middle,0);	
+		set_moto_current(&hcan1,out_right,out_left,out_middle,0);
   }
   /* USER CODE END StartTask03 */
 }
