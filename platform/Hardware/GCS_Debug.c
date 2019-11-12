@@ -14,6 +14,8 @@
 /* Includes ------------------------------------------------------------------*/ 
 #include <GCS_Debug.h>
 extern int16_t speed_set,speed_left,speed_right;
+extern float total_angle_set;
+extern uint8_t shoot_mode;
 float debug_target,debug_Kp,debug_Ki,debug_Kd;
 uint8_t debug_tune_type,debug_tune_obj;
 
@@ -145,8 +147,10 @@ void PARAMETER_MODIFICATION(uint8_t * PARAMETER)
     /* 以下部分用于机器人控制器参数整定 */
     case 0x00: speed_set =PARAMETER_Change_float(PARAMETER+1);
           break;
-    case 0x01: debug_target =PARAMETER_Change_float(PARAMETER+1);
+    case 0x01: total_angle_set =PARAMETER_Change_float(PARAMETER+1);
           break;
+		case 0x02: shoot_mode = PARAMETER_Change_float(PARAMETER+1);
+					break;
     case 0x04: debug_Kp =PARAMETER_Change_float(PARAMETER+1);
           break;
     case 0x05: debug_Ki =PARAMETER_Change_float(PARAMETER+1);

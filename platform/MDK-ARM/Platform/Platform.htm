@@ -3,7 +3,7 @@
 <title>Static Call Graph - [Platform\Platform.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image Platform\Platform.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Thu Oct 24 21:16:09 2019
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Oct 30 11:02:26 2019
 <BR><P>
 <H3>Maximum Stack Usage =        276 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -16,7 +16,6 @@ Mutually Recursive functions
  <LI><a href="#[2]">HardFault_Handler</a>&nbsp;&nbsp;&nbsp;&rArr;&nbsp;&nbsp;&nbsp;<a href="#[2]">HardFault_Handler</a><BR>
  <LI><a href="#[3]">MemManage_Handler</a>&nbsp;&nbsp;&nbsp;&rArr;&nbsp;&nbsp;&nbsp;<a href="#[3]">MemManage_Handler</a><BR>
  <LI><a href="#[63]">StartDefaultTask</a>&nbsp;&nbsp;&nbsp;&rArr;&nbsp;&nbsp;&nbsp;<a href="#[63]">StartDefaultTask</a><BR>
- <LI><a href="#[64]">StartTask02</a>&nbsp;&nbsp;&nbsp;&rArr;&nbsp;&nbsp;&nbsp;<a href="#[64]">StartTask02</a><BR>
  <LI><a href="#[5]">UsageFault_Handler</a>&nbsp;&nbsp;&nbsp;&rArr;&nbsp;&nbsp;&nbsp;<a href="#[5]">UsageFault_Handler</a><BR>
 </UL>
 <P>
@@ -996,7 +995,7 @@ Global Symbols
 <LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MODE_MODIFICATION
 </UL>
 
-<P><STRONG><a name="[bc]"></a>PARAMETER_MODIFICATION</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, gcs_debug.o(i.PARAMETER_MODIFICATION))
+<P><STRONG><a name="[bc]"></a>PARAMETER_MODIFICATION</STRONG> (Thumb, 112 bytes, Stack size 8 bytes, gcs_debug.o(i.PARAMETER_MODIFICATION))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = PARAMETER_MODIFICATION &rArr; PARAMETER_Change_float
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PARAMETER_Change_float
@@ -1034,19 +1033,15 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.constdata)
 </UL>
-<P><STRONG><a name="[64]"></a>StartTask02</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, main.o(i.StartTask02))
-<BR><BR>[Stack]<UL><LI>Max Depth = 100 + In Cycle
-<LI>Call Chain = StartTask02 &rArr;  StartTask02 (Cycle)
+<P><STRONG><a name="[64]"></a>StartTask02</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, main.o(i.StartTask02))
+<BR><BR>[Stack]<UL><LI>Max Depth = 100<LI>Call Chain = StartTask02 &rArr; Sent_Contorl &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Sent_Contorl
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTask02
-</UL>
-<BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTask02
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.constdata)
 </UL>
-<P><STRONG><a name="[65]"></a>StartTask03</STRONG> (Thumb, 444 bytes, Stack size 24 bytes, main.o(i.StartTask03))
+<P><STRONG><a name="[65]"></a>StartTask03</STRONG> (Thumb, 522 bytes, Stack size 24 bytes, main.o(i.StartTask03))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = StartTask03 &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_moto_current
@@ -1058,7 +1053,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.constdata)
 </UL>
-<P><STRONG><a name="[66]"></a>StartTask04</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, main.o(i.StartTask04))
+<P><STRONG><a name="[66]"></a>StartTask04</STRONG> (Thumb, 84 bytes, Stack size 0 bytes, main.o(i.StartTask04))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = StartTask04 &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay

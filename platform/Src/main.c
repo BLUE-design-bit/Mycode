@@ -75,8 +75,9 @@
 /* USER CODE BEGIN PM */
 moto_measure_t motor[3];
 extern int16_t speed_set;
-float total_angle_ini,total_angle_now,total_angle_set;//分别设角度初始值，当前值，以及期望转到多少度
-
+float total_angle_ini,total_angle_now;//分别设角度初始值，当前值，以及期望转到多少度
+float total_angle_set;
+uint8_t shoot_mode;//连发15次，mode=1隔3秒，mode=2隔5秒
 
 extern dr_16 dr_control;
 extern float debug_Kp,debug_Ki,debug_Kd;
@@ -190,15 +191,15 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of myTask02 */
-  osThreadDef(myTask02, StartTask02, osPriorityIdle, 0, 128);
+  osThreadDef(myTask02, StartTask02, osPriorityNormal, 0, 128);
   myTask02Handle = osThreadCreate(osThread(myTask02), NULL);
 
   /* definition and creation of myTask03 */
-  osThreadDef(myTask03, StartTask03, osPriorityIdle, 0, 128);
+  osThreadDef(myTask03, StartTask03, osPriorityNormal, 0, 128);
   myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
 
   /* definition and creation of myTask04 */
-  osThreadDef(myTask04, StartTask04, osPriorityIdle, 0, 128);
+  osThreadDef(myTask04, StartTask04, osPriorityNormal, 0, 128);
   myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -502,6 +503,7 @@ void StartTask02(void const * argument)
   {
     osDelay(10);
 		Sent_Contorl(&huart1);
+		remote_data = dr_control.s2;
   }
   /* USER CODE END StartTask02 */
 }
@@ -513,12 +515,17 @@ void StartTask02(void const * argument)
 * @retval None
 */
 	#define PB1 HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)
-
+uint8_t a;
+int16_t out_middle;
+uint8_t flag_shoot;
+uint8_t continue_flag = 1;
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void const * argument)
 {
   /* USER CODE BEGIN StartTask03 */
 	speed_set = 0;
+	flag_shoot = 0;
+	out_middle = 0;
 	int16_t out_left,out_right;
 	pid_param_init(&pid[0],5000,50,0,0,0);//两个3508电机pid的初始化
 	pid_param_init(&pid[1],5000,50,0,0,0);//两个3508电机pid的初始化
@@ -526,6 +533,7 @@ void StartTask03(void const * argument)
 	
 	debug_Kp = 50;
 
+	
 	total_angle_set = 20000;
   /* Infinite loop */
   for(;;)
@@ -536,9 +544,6 @@ void StartTask03(void const * argument)
 		out_right = pid_calc(&pid[0],motor[0].real_current,speed_set);
 		out_left = pid_calc(&pid[1],motor[1].real_current,-speed_set);
 
-		int16_t out_middle = 0;
-		uint8_t flag_init = 0;
-		uint8_t flag_shoot = 0;
 		get_total_angle(&motor[2]);
 		total_angle_now = motor[2].total_angle;
 		//拨弹电机
@@ -549,63 +554,53 @@ void StartTask03(void const * argument)
 		flag_init：是否已经发射过一次，且未清零
 		1:已发射出去过
 		*/
-		if(flag_init == 1)
+		a = PB1;
+		switch(continue_flag)
 		{
-			if(remote_data == 1)
-			{
-				flag_init = 0;
+			case 0:
+				break;
+			case 1:
 				flag_shoot = 0;
-			}
+			total_angle_ini = total_angle_now;
+			break;
+			case 3:
+				if(flag_shoot == 0)
+					
+					flag_shoot = 1;
+				break;
+			case 4:
+				break;
 		}
-		else
+		switch(flag_shoot)
 		{
-			if(remote_data == 3)
-			{
-				if(PB1 == 1)
+			case 0:
+				//可以再加上保护状态
+				if((total_angle_ini -total_angle_now) > 1000)
+					out_middle = pid_calc(&pid[2],motor[2].real_current,1500);
+				break;
+			case 1:
+				if((total_angle_ini - total_angle_now)<total_angle_set)
 				{
-					total_angle_ini = total_angle_now;//对电机位置再作调整
-					if((flag_init == 0)&&(flag_shoot == 0))
-					{
-						flag_shoot = 1;
-					}
-				}
-				if(flag_shoot == 1)//发出状态
-				{
-					if((total_angle_ini - total_angle_now)<total_angle_set)
-					{
-						out_middle = pid_calc(&pid[2],motor[2].real_current,-1500);
-					}
-					else
-					{
-						flag_shoot = 2;
-					}
-				}
-				if(flag_shoot == 2)//回拉状态
-				{
-					if(PB1 == 1)
-					{
-						out_middle = 0;
-						flag_init = 1;
-						flag_shoot = 3;//不知道有没有这个必要
-					}
-					else
-					{
-						out_middle = pid_calc(&pid[2],motor[2].real_current,1500);
-					}
-				}
-			}
-			else if(remote_data == 1)
-			{
-				if(PB1 == 1)
-				{
-					flag_shoot = 0;
-					flag_init = 0;
+					out_middle = pid_calc(&pid[2],motor[2].real_current,-1500);
 				}
 				else
 				{
+					flag_shoot = 2;
+				}
+				break;
+			case 2:
+				if(!PB1)
+				{
 					out_middle = pid_calc(&pid[2],motor[2].real_current,1500);
 				}
-			}
+				else
+				{
+					out_middle = 0;
+					flag_shoot = 3;
+				}
+				break;
+			case 3:
+				break;
 		}
 		
 		set_moto_current(&hcan1,out_right,out_left,out_middle,0);
@@ -623,12 +618,26 @@ void StartTask03(void const * argument)
 void StartTask04(void const * argument)
 {
   /* USER CODE BEGIN StartTask04 */
+	int time = 0;
   /* Infinite loop */
   for(;;)
   {
 		//遥控代码，弹射装置没用上。
-    osDelay(10);
-		remote_data = dr_control.s2;
+		osDelay(10);
+		if((shoot_mode == 2)&&(time<15)){
+    osDelay(1000);
+		continue_flag = 3;
+		osDelay(4000);
+		continue_flag = 1;
+		time++;}
+		else if((shoot_mode == 1)&&(time<15)){
+		osDelay(1000);
+		continue_flag = 3;
+		osDelay(2000);
+		continue_flag = 1;
+		time++;}
+		else if(shoot_mode == 0)
+			time = 0;
   }
   /* USER CODE END StartTask04 */
 }
